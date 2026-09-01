@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project 0: Becoming Friends with Your Camera — Krish Tandon</title>
+  <meta name="description" content="CS180/280A Project 0: perspective, focal length, and the center of projection — selfies, architectural compression, and a dolly zoom.">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📸</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">Krish Tandon</a>
+    <nav class="topnav">
+      <a href="#part1">1 · Selfie</a>
+      <a href="#part2">2 · Architecture</a>
+      <a href="#part3">3 · Dolly Zoom</a>
+      <a href="#takeaway">Takeaway</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <a class="backlink" href="/">← All projects</a>
+      <p class="eyebrow">Project 0 · CS180/280A · Fall 2026</p>
+      <h1>Becoming Friends<br>with <em>Your Camera</em></h1>
+      <p class="lede">
+        Three small experiments in the same idea: <em>where you stand</em> decides how a scene
+        looks. Focal length only decides how much of it you keep.
+      </p>
+      <ul class="meta">
+        <li>Krish Tandon</li>
+        <li>3 parts</li>
+        <li>All photos shot on iPhone</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================ PART 1 ============================ -->
+  <section id="part1">
+    <div class="wrap">
+      <p class="eyebrow">Part 1</p>
+      <h2>Selfie: the wrong way vs. the right way</h2>
+      <div class="prose">
+        <p>Two portraits of the same face, framed to the same size. The first is an arm's-length
+          selfie. For the second I backed up several feet and zoomed in until the face filled the
+          frame again. Nothing else changed — same subject, same light, same pose.</p>
+      </div>
+
+      <div class="pair">
+        <figure>
+          <a class="shot shot--tall" href="media/part1-close.jpg" target="_blank" rel="noopener">
+            <span class="tag tag--bad">Close · wide</span>
+            <img src="media/part1-close.jpg" alt="Selfie taken from close up, showing perspective distortion of the face">
+          </a>
+          <figcaption>
+            <b>The wrong way.</b> Camera about an arm's length away. The nose and forehead push
+            forward, the ears fall off the sides of the head, and the face reads wide and
+            round.
+            <span class="exif" data-exif="part1-close">—</span>
+          </figcaption>
+        </figure>
+
+        <figure>
+          <a class="shot shot--tall" href="media/part1-far.jpg" target="_blank" rel="noopener">
+            <span class="tag tag--good">Far · zoomed</span>
+            <img src="media/part1-far.jpg" alt="Portrait taken from several feet away with the lens zoomed in, showing natural proportions">
+          </a>
+          <figcaption>
+            <b>The right way.</b> Several feet back, zoomed in to match the framing. Nose, cheeks
+            and ears settle into their real proportions; the face flattens out and simply looks
+            like the person.
+            <span class="exif" data-exif="part1-far">—</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="why">
+        <h3>Why</h3>
+        <p>In a perspective image, size falls off as <b>1/depth</b> — so what matters isn't how far
+          away the camera is, it's the <em>ratio</em> of distances to the near and far parts of the
+          face. A head is about 10&nbsp;cm deep. Held at 30&nbsp;cm, the nose is a third closer than
+          the ears, so it's rendered a third bigger. Back at 2&nbsp;m, that same 10&nbsp;cm is only
+          5% — and the distortion disappears.</p>
+        <p class="math">nose / ears  =  (d + Δ) / d  =  1 + Δ/d</p>
+        <p>The zoom didn't fix the face — <b>stepping back did</b>. Zooming only restored the
+          framing. That's also why "85&nbsp;mm is a flattering portrait lens" is a bit of a lie: the
+          lens is flattering because it forces you to stand far enough away.</p>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ PART 2 ============================ -->
+  <section id="part2">
+    <div class="wrap">
+      <p class="eyebrow">Part 2</p>
+      <h2>Architectural perspective compression</h2>
+      <div class="prose">
+        <p>The same experiment run backwards, on a building instead of a face. First I stood far
+          away across an open space and zoomed all the way in. Then I walked toward the building
+          and shot it wide, stopping when the facade filled roughly the same fraction of the
+          frame.</p>
+      </div>
+
+      <div class="pair">
+        <figure>
+          <a class="shot" href="media/part2-far.jpg" target="_blank" rel="noopener">
+            <span class="tag">Far · zoomed in</span>
+            <img src="media/part2-far.jpg" alt="Building facade photographed from far away with the lens zoomed in, appearing flattened">
+          </a>
+          <figcaption>
+            <b>Flattened.</b> Shot from far back at long focal length. The near and far ends of
+            the facade are nearly the same size, the receding lines barely converge, and the
+            building collapses toward a flat elevation drawing.
+            <span class="exif" data-exif="part2-far">—</span>
+          </figcaption>
+        </figure>
+
+        <figure>
+          <a class="shot" href="media/part2-close.jpg" target="_blank" rel="noopener">
+            <span class="tag">Close · wide</span>
+            <img src="media/part2-close.jpg" alt="Same building photographed from close up without zoom, showing strong converging perspective lines">
+          </a>
+          <figcaption>
+            <b>Deep.</b> Same building, walked right up to it, no zoom. The near corner looms, the
+            far end races away, and the edges converge hard on the vanishing point.
+            <span class="exif" data-exif="part2-close">—</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="why">
+        <h3>Why</h3>
+        <p>Same arithmetic, bigger scale. If the facade runs 20&nbsp;m away from me in depth, then
+          from 100&nbsp;m back the far corner is only 17% smaller than the near one — the wall looks
+          almost flat. Walk in to 15&nbsp;m and the far corner drops to <em>43%</em> of the near
+          one, and the lines converge hard.</p>
+        <p class="math">far / near  =  d / (d + L)</p>
+        <p>So the telephoto didn't compress anything — <b>distance did</b>. The long lens just let
+          me stand that far back and still fill the frame.</p>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ PART 3 ============================ -->
+  <section id="part3">
+    <div class="wrap">
+      <p class="eyebrow">Part 3</p>
+      <h2>The dolly zoom</h2>
+      <div class="prose">
+        <p>Parts 1 and 2 change the viewpoint and let the subject size change. The
+          <a href="https://en.wikipedia.org/wiki/Dolly_zoom">dolly zoom</a> — Hitchcock's
+          <em>Vertigo</em> shot — does the opposite: it changes the viewpoint and zooms at the same
+          time, <em>pinning the subject to a fixed size</em> so that the only thing left moving is
+          the background.</p>
+        <p>I shot a sequence of stills, stepping the camera back and zooming in between each frame
+          to keep the foreground subject the same size, then assembled them into a GIF.</p>
+      </div>
+
+      <div class="gif-stage">
+        <img src="media/dolly-zoom.gif" alt="Animated dolly zoom: the foreground subject stays a constant size while the background rushes in behind it">
+      </div>
+      <p style="text-align:center; font-size:.88rem; color:var(--text-mute); margin-top:.9rem;">
+        Subject locked. Background breathing.
+      </p>
+
+      <h3>The frames</h3>
+      <p class="prose" style="margin-top:0;">Every still that went into the GIF, in order. Click any
+        frame for the full-size image.</p>
+
+      <div class="contact-sheet">
+        <!-- CONTACT_SHEET_START -->
+        <!-- CONTACT_SHEET_END -->
+      </div>
+
+      <div class="why">
+        <h3>Why</h3>
+        <p>Keeping the subject the same size means the focal length has to track the subject
+          distance exactly (<span style="font-family:var(--mono)">f = k·d<sub>s</sub></span>). The
+          background sits a fixed distance <span style="font-family:var(--mono)">D</span> further
+          back, so its magnification is:</p>
+        <p class="math">m_bg  ∝  f / (d_s + D)  =  k / (1 + D/d_s)</p>
+        <p>As I dolly <b>back</b>, <span style="font-family:var(--mono)">d<sub>s</sub></span> grows,
+          <span style="font-family:var(--mono)">D/d<sub>s</sub></span> shrinks, and the background
+          <b>grows</b> — rushing in behind a subject that never changes size. Same fact as Parts 1
+          and 2, just made visible as motion: perspective is set by where the camera <em>is</em>,
+          and the zoom is only there to hold the subject still so you can see it happen.</p>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TAKEAWAY ============================ -->
+  <section id="takeaway">
+    <div class="wrap prose">
+      <h2>Takeaway</h2>
+      <p>Zooming is just a crop — it scales everything by the same factor and can't change the
+        relative size of two things at different depths. <b>Only moving the camera does that</b>,
+        and that's all "perspective" really is.</p>
+      <p>A bulbous selfie nose, a flattened building, and the <em>Vertigo</em> shot are the same
+        equation read three ways. The version I'll actually remember: <b>pick the distance first
+        for the look you want, then pick the focal length to fix the framing.</b></p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Krish Tandon · CS180/280A · Project 0</span>
+    <span><a href="/">← Back to portfolio</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
