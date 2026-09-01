@@ -47,9 +47,10 @@
       <p class="eyebrow">Part 1</p>
       <h2>Selfie: the wrong way vs. the right way</h2>
       <div class="prose">
-        <p>Two portraits of the same face, framed to the same size. The first is an arm's-length
-          selfie. For the second I backed up several feet and zoomed in until the face filled the
-          frame again. Nothing else changed — same subject, same light, same pose.</p>
+        <p>Two portraits of the same face, framed to the same size. The first is a close
+          selfie on the 0.5&times; ultra-wide. For the second I backed away and zoomed to
+          1&times; until the face filled the frame again. Nothing else changed — same subject,
+          same light, same pose.</p>
       </div>
 
       <div class="pair">
@@ -59,9 +60,9 @@
             <img src="media/part1-close.jpg" alt="Selfie taken from close up, showing perspective distortion of the face">
           </a>
           <figcaption>
-            <b>The wrong way.</b> Camera about an arm's length away. The nose and forehead push
-            forward, the ears fall off the sides of the head, and the face reads wide and
-            round.
+            <b>The wrong way.</b> Shot close, on the 0.5&times; ultra-wide. The nose and
+            forehead push forward, the jaw tapers away, and the ears wrap around out of
+            sight.
             <span class="exif" data-exif="part1-close">14mm equiv. · f/2.2 · 1/60s · ISO 1000 · iPhone 16 Pro</span>
           </figcaption>
         </figure>
@@ -72,25 +73,50 @@
             <img src="media/part1-far.jpg" alt="Portrait taken from several feet away with the lens zoomed in, showing natural proportions">
           </a>
           <figcaption>
-            <b>The right way.</b> Several feet back, zoomed in to match the framing. Nose, cheeks
-            and ears settle into their real proportions; the face flattens out and simply looks
-            like the person.
+            <b>The right way.</b> Backed away and zoomed to 1&times; to rebuild the same
+            framing. The nose settles back, the cheeks and jaw fill out, and the proportions
+            read like the actual person.
             <span class="exif" data-exif="part1-far">24mm equiv. · f/1.8 · 1/60s · ISO 500 · iPhone 16 Pro</span>
           </figcaption>
         </figure>
       </div>
 
+      <figure style="margin-top:2rem;">
+        <a class="shot" href="media/part1-detail.jpg" target="_blank" rel="noopener"
+           style="display:block;">
+          <img src="media/part1-detail.jpg" alt="The two faces cropped from the same region of each frame at the same scale, showing the difference in nose size and jaw width"
+               style="height:auto; object-fit:contain;">
+        </a>
+        <figcaption>
+          The same crop box from both frames, at the same scale — 0.5&times; on the left,
+          1&times; on the right. The head is the same height in each, so what you're seeing is
+          purely the change in <b>proportions</b>: on the left the nose is larger, the jaw
+          narrows, and the sides of the head fall away. On the right the face is fuller and
+          flatter.
+        </figcaption>
+      </figure>
+
       <div class="why">
         <h3>Why</h3>
-        <p>In a perspective image, size falls off as <b>1/depth</b> — so what matters isn't how far
-          away the camera is, it's the <em>ratio</em> of distances to the near and far parts of the
-          face. A head is about 10&nbsp;cm deep. Held at 30&nbsp;cm, the nose is a third closer than
-          the ears, so it's rendered a third bigger. Back at 2&nbsp;m, that same 10&nbsp;cm is only
-          5% — and the distortion disappears.</p>
+        <p>In a perspective image, size falls off as <b>1/depth</b> — so what matters isn't how
+          far away the camera is, it's the <em>ratio</em> of distances to the near and far parts
+          of the face. A head is roughly 10&nbsp;cm deep, so the nose sits at
+          <span style="font-family:var(--mono)">d</span> while the ears sit at
+          <span style="font-family:var(--mono)">d + Δ</span>:</p>
         <p class="math">nose / ears  =  (d + Δ) / d  =  1 + Δ/d</p>
-        <p>The zoom didn't fix the face — <b>stepping back did</b>. Zooming only restored the
-          framing. That's also why "85&nbsp;mm is a flattering portrait lens" is a bit of a lie: the
-          lens is flattering because it forces you to stand far enough away.</p>
+        <p><b>How far back did I actually go?</b> I didn't measure it at the time — but the two
+          photos do. Matching features across the pair, the face comes out the
+          <b>same size in both</b> (0.98&times;) while the lens went from 14&nbsp;mm to
+          24&nbsp;mm equivalent — <b>1.71&times; longer</b>. Holding the subject's size while
+          lengthening the lens by 1.71&times; is only possible if the camera moved
+          <b>≈1.7&times; further away</b>.</p>
+        <p>Put numbers on it: from a typical arm's length of ~35&nbsp;cm, that 10&nbsp;cm of head
+          depth renders the nose about <b>29%</b> bigger than the ears. At 1.7&times; that
+          distance it's <b>16%</b>. The distortion roughly halves — which is exactly the
+          difference you can see in the crop above.</p>
+        <p>So the zoom didn't fix the face — <b>moving back did</b>. Zooming only restored the
+          framing. That's also why "85&nbsp;mm is a flattering portrait lens" is a bit of a lie:
+          the lens is flattering because it forces you to stand far enough away.</p>
       </div>
       </div>
     </div>
