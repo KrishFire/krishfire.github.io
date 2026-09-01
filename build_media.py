@@ -40,55 +40,74 @@ THUMB_EDGE = 500
 
 # ----------------------------------------------------------------- metadata
 
-def mdls(path: Path, key: str):
-    """Read one Spotlight metadata key (works on HEIC, which PIL can't open)."""
+_EXIF_CACHE = {}
+
+
+def exif_of(path: Path) -> dict:
+    """Full EXIF as a tag-name dict. HEIC is routed through sips, which keeps EXIF."""
+    key = str(path)
+    if key in _EXIF_CACHE:
+        return _EXIF_CACHE[key]
+
+    from PIL import ExifTags
+
+    src = path
+    tmp = None
+    if path.suffix.lower() in (".heic", ".heif"):
+        tmp = OUT / f".exif-{path.stem}.jpg"
+        subprocess.run(["sips", "-s", "format", "jpeg", str(path), "--out", str(tmp)],
+                       capture_output=True)
+        src = tmp
+
+    d = {}
     try:
-        r = subprocess.run(["mdls", "-raw", "-name", key, str(path)],
-                           capture_output=True, text=True, timeout=15)
-        v = r.stdout.strip()
-        return None if v in ("", "(null)") else v
+        ex = Image.open(src).getexif()
+        d = {ExifTags.TAGS.get(k, k): v for k, v in ex.items()}
+        d.update({ExifTags.TAGS.get(k, k): v for k, v in ex.get_ifd(0x8769).items()})
     except Exception:
-        return None
+        pass
+    finally:
+        if tmp:
+            tmp.unlink(missing_ok=True)
+
+    _EXIF_CACHE[key] = d
+    return d
 
 
 def capture_time(path: Path):
-    v = mdls(path, "kMDItemContentCreationDate")
+    v = exif_of(path).get("DateTimeOriginal") or exif_of(path).get("DateTime")
     if v:
-        for fmt in ("%Y-%m-%d %H:%M:%S %z", "%Y-%m-%d %H:%M:%S +0000"):
-            try:
-                return dt.datetime.strptime(v, fmt)
-            except ValueError:
-                pass
+        try:
+            return dt.datetime.strptime(str(v), "%Y:%m:%d %H:%M:%S")
+        except ValueError:
+            pass
     return dt.datetime.fromtimestamp(path.stat().st_mtime)
 
 
 def photo_facts(path: Path):
-    """Human-readable EXIF line: focal length (35mm equiv), aperture, exposure, ISO."""
+    """Human-readable EXIF line: focal length (35mm equiv), aperture, shutter, ISO, body."""
+    d = exif_of(path)
     bits = []
 
-    f35 = mdls(path, "kMDItemFocalLength35mm")
-    fnat = mdls(path, "kMDItemFocalLength")
+    f35, fnat = d.get("FocalLengthIn35mmFilm"), d.get("FocalLength")
     if f35:
         bits.append(f"{float(f35):.0f}mm equiv.")
     elif fnat:
         bits.append(f"{float(fnat):.1f}mm")
 
-    ap = mdls(path, "kMDItemFNumber")
-    if ap:
-        bits.append(f"f/{float(ap):.1f}")
+    if d.get("FNumber"):
+        bits.append(f"f/{float(d['FNumber']):.1f}")
 
-    ex = mdls(path, "kMDItemExposureTimeSeconds")
-    if ex:
-        e = float(ex)
-        bits.append(f"1/{round(1/e)}s" if e < 1 else f"{e:g}s")
+    if d.get("ExposureTime"):
+        e = float(d["ExposureTime"])
+        bits.append(f"1/{round(1/e)}s" if 0 < e < 1 else f"{e:g}s")
 
-    iso = mdls(path, "kMDItemISOSpeed")
+    iso = d.get("ISOSpeedRatings") or d.get("PhotographicSensitivity")
     if iso:
-        bits.append(f"ISO {float(iso):.0f}")
+        bits.append(f"ISO {int(iso)}")
 
-    model = mdls(path, "kMDItemAcquisitionModel")
-    if model:
-        bits.append(model)
+    if d.get("Model"):
+        bits.append(str(d["Model"]).strip())
 
     return " · ".join(bits)
 
