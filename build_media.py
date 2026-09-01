@@ -12,7 +12,11 @@ Drop photos here (any mix of .heic/.jpg/.jpeg/.png, any filenames):
 Ordering is taken from EXIF capture time when available, else filename.
 Use --swap1 / --swap2 to flip a pair if the capture order was the other way round.
 
-    python3 build_media.py
+Handheld dolly-zoom frames always wobble. --stabilise locks the subject so only
+the background moves; it rescales whole frames uniformly, so the effect itself is
+untouched. Pass the subject box as frame fractions if the default misses it.
+
+    python3 build_media.py --swap1 --boomerang --stabilise
 """
 
 import argparse
@@ -22,6 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent
@@ -157,6 +162,79 @@ def collect(sub: str):
     return files
 
 
+# ----------------------------------------------------------------- stabilise
+
+def stabilise(ims, box):
+    """Lock the subject so only the background moves.
+
+    Handheld dolly-zoom stills always wobble: the subject drifts across the frame
+    and its size creeps, because you can't nail "same size" by eye while walking
+    backwards. This finds the subject via SIFT and applies one uniform similarity
+    (scale + rotation + translation) per frame to put it back at a fixed size and
+    position.
+
+    A uniform similarity rescales the WHOLE frame, so relative sizes inside each
+    frame are untouched -- the dolly-zoom effect survives exactly. It removes the
+    photographer's aim, not the physics. `box` is the subject region in the first
+    frame as (x0, y0, x1, y1) fractions.
+
+    Returns aligned PIL images, all cropped to the largest window valid in every
+    frame. Falls back to the originals (with a warning) if tracking fails.
+    """
+    import cv2
+
+    arr = [cv2.cvtColor(np.array(im), cv2.COLOR_RGB2BGR) for im in ims]
+    if len({a.shape for a in arr}) != 1:
+        print("!! frames differ in size; skipping stabilisation")
+        return ims
+
+    grey = [cv2.cvtColor(a, cv2.COLOR_BGR2GRAY) for a in arr]
+    h, w = grey[0].shape
+    sift = cv2.SIFT_create(nfeatures=15000)
+
+    m = np.zeros((h, w), np.uint8)
+    m[int(h*box[1]):int(h*box[3]), int(w*box[0]):int(w*box[2])] = 255
+    k1, d1 = sift.detectAndCompute(grey[0], m)
+    if d1 is None or len(k1) < 12:
+        print(f"!! only {len(k1)} keypoints in the subject box; skipping stabilisation")
+        return ims
+
+    inv = [np.float32([[1, 0, 0], [0, 1, 0]])]
+    for i in range(1, len(arr)):
+        k2, d2 = sift.detectAndCompute(grey[i], None)
+        good = [a for a, b in cv2.BFMatcher().knnMatch(d1, d2, k=2)
+                if a.distance < 0.72 * b.distance]
+        if len(good) < 8:
+            print(f"!! frame {i+1}: only {len(good)} subject matches; skipping stabilisation")
+            return ims
+        p1 = np.float32([k1[a.queryIdx].pt for a in good]).reshape(-1, 1, 2)
+        p2 = np.float32([k2[a.trainIdx].pt for a in good]).reshape(-1, 1, 2)
+        T, _ = cv2.estimateAffinePartial2D(p1, p2, method=cv2.RANSAC,
+                                           ransacReprojThreshold=3.0, maxIters=25000)
+        if T is None:
+            print(f"!! frame {i+1}: no transform; skipping stabilisation")
+            return ims
+        inv.append(np.linalg.inv(np.vstack([T, [0, 0, 1]]))[:2])
+
+    warped = [cv2.warpAffine(arr[i], inv[i], (w, h), flags=cv2.INTER_LANCZOS4)
+              for i in range(len(arr))]
+
+    # Largest window that is real image in EVERY frame. Take the biggest
+    # axis-aligned rectangle *inside* each warped quad -- its bounding box would
+    # be too generous and would leave black wedges along the edges.
+    x0, y0, x1, y1 = 0.0, 0.0, float(w), float(h)
+    quad = np.float32([[0, 0], [w, 0], [w, h], [0, h]]).reshape(-1, 1, 2)
+    for t in inv:
+        tl, tr, br, bl = cv2.transform(quad, t).reshape(-1, 2)
+        x0, x1 = max(x0, tl[0], bl[0]), min(x1, tr[0], br[0])
+        y0, y1 = max(y0, tl[1], tr[1]), min(y1, bl[1], br[1])
+    x0, y0, x1, y1 = int(x0 + 6), int(y0 + 6), int(x1 - 6), int(y1 - 6)
+    print(f"   stabilised: subject locked, kept {(x1-x0)*(y1-y0)/(w*h)*100:.0f}% of frame")
+
+    return [Image.fromarray(cv2.cvtColor(v[y0:y1, x0:x1], cv2.COLOR_BGR2RGB))
+            for v in warped]
+
+
 # ----------------------------------------------------------------- html patch
 
 def patch_page(exif: dict, frames: list):
@@ -192,6 +270,9 @@ def main():
     ap.add_argument("--reverse3", action="store_true", help="reverse the dolly-zoom order")
     ap.add_argument("--boomerang", action="store_true", help="play the GIF forwards then back")
     ap.add_argument("--ms", type=int, default=GIF_MS, help="GIF frame duration in ms")
+    ap.add_argument("--stabilise", "--stabilize", dest="stabilise", metavar="x0,y0,x1,y1",
+                    nargs="?", const="0.43,0.455,0.585,0.635",
+                    help="lock the dolly-zoom subject; optional box as frame fractions")
     args = ap.parse_args()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -226,20 +307,25 @@ def main():
     else:
         if len(files) < 4:
             print(f"!! only {len(files)} dolly-zoom frames; the spec asks for 4-8+.")
-        gif_frames = []
+        stills = []
         for i, src in enumerate(files, 1):
-            im = load(src)
+            im = fit(load(src), MAX_EDGE)
             full, thumb = f"part3-{i:02d}.jpg", f"part3-{i:02d}-thumb.jpg"
             save_jpeg(im, OUT / full)
             save_jpeg(im, OUT / thumb, max_edge=THUMB_EDGE, q=80)
             frames.append((full, thumb))
-
-            w, h = im.size
-            gif_frames.append(fit(im, round(GIF_WIDTH * max(w, h) / w)).convert(
-                "P", palette=Image.ADAPTIVE, colors=128))
+            stills.append(im)
             print(f"   {src.name}  ->  0/media/{full}")
 
-        # normalise every GIF frame to the first frame's size
+        # the stills stay exactly as shot; only the GIF gets aligned
+        gif_src = stills
+        if args.stabilise:
+            box = tuple(float(v) for v in args.stabilise.split(","))
+            gif_src = stabilise(stills, box)
+
+        gif_frames = [fit(im, round(GIF_WIDTH * max(im.size) / im.size[0])).convert(
+            "P", palette=Image.ADAPTIVE, colors=128) for im in gif_src]
+
         base = gif_frames[0].size
         gif_frames = [f if f.size == base else f.resize(base, Image.LANCZOS) for f in gif_frames]
 
