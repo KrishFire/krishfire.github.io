@@ -259,3 +259,27 @@ footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wr
   html { scroll-behavior: auto; }
   * { transition: none !important; }
 }
+
+/* ---------- narrow screens: keep the sticky header compact ---------- */
+
+@media (max-width: 620px) {
+  html { scroll-padding-top: 72px; }
+
+  .topbar-inner { min-height: 0; gap: .35rem; padding-block: .5rem; }
+  .brand { font-size: 1.05rem; margin-right: 0; width: 100%; }
+
+  .topnav {
+    width: 100%;
+    gap: .9rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .topnav::-webkit-scrollbar { display: none; }
+  .topnav a { font-size: .8rem; white-space: nowrap; padding-block: .1rem; }
+
+  .why { padding: 1.15rem 1.2rem; }
+  .contact-sheet { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .55rem; }
+  .meta li { font-size: .7rem; padding: .25rem .65rem; }
+}
