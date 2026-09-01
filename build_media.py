@@ -33,7 +33,7 @@ EXTS = {".heic", ".heif", ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp"}
 
 MAX_EDGE = 1800          # long edge of the full-size web images
 JPEG_Q = 84
-GIF_WIDTH = 600
+GIF_WIDTH = 720          # source width; displayed at 600 CSS px so it stays sharp
 GIF_MS = 220             # per-frame duration
 THUMB_EDGE = 500
 
@@ -236,7 +236,7 @@ def main():
 
             w, h = im.size
             gif_frames.append(fit(im, round(GIF_WIDTH * max(w, h) / w)).convert(
-                "P", palette=Image.ADAPTIVE, colors=200))
+                "P", palette=Image.ADAPTIVE, colors=128))
             print(f"   {src.name}  ->  0/media/{full}")
 
         # normalise every GIF frame to the first frame's size
