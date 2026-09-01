@@ -283,3 +283,40 @@ footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wr
   .contact-sheet { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .55rem; }
   .meta li { font-size: .7rem; padding: .25rem .65rem; }
 }
+
+/* ---------- print: the Gradescope PDF is a print of this page ---------- */
+
+@media print {
+  /* force the light palette regardless of the OS theme */
+  :root {
+    --bg: #fff; --bg-raised: #fff; --bg-sunken: #fff;
+    --text: #000; --text-soft: #222; --text-mute: #555;
+    --rule: #bbb; --accent: #003262; --gold: #a37200; --shadow: none;
+  }
+
+  body { font-size: 11pt; line-height: 1.45; background: #fff; }
+
+  /* a sticky bar would stamp itself over the first page */
+  .topbar { position: static; border-bottom: 1px solid var(--rule); backdrop-filter: none; }
+  .topnav, .backlink { display: none; }
+
+  section { padding-block: 1.1rem; break-inside: auto; }
+  .hero { padding-block: .5rem 1rem; }
+  h1 { font-size: 28pt; }
+  h2 { font-size: 18pt; }
+
+  /* keep a photo and its caption on the same page */
+  figure, .why, .gif-stage { break-inside: avoid; page-break-inside: avoid; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+
+  .pair { grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .shot { box-shadow: none; }
+  .shot img, .shot--tall img { height: auto; max-height: 3.4in; object-fit: contain; }
+  .gif-stage { max-width: 3.6in; }
+  .contact-sheet { grid-template-columns: repeat(4, 1fr); }
+
+  a { color: var(--accent); text-decoration: none; }
+  .tag { background: #333 !important; color: #fff !important; }
+  .tag--good { background: #14532d !important; }
+  .tag--bad  { background: #7a2014 !important; }
+}
