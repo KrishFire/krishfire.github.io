@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Project 1: Colorizing the Prokudin-Gorskii Collection — Krish Tandon</title>
+  <title>Project 1: Colorizing the Prokudin-Gorskii Collection Krish Tandon</title>
   <meta name="description" content="CS180 Project 1: aligning Prokudin-Gorskii glass plate negatives into color photographs with NCC, L2 and an image pyramid.">
   <link rel="stylesheet" href="/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎞️</text></svg>">
@@ -32,9 +32,9 @@
       <p class="eyebrow">Project 1 &middot; CS180 &middot; Fall 2026</p>
       <h1>Images of the<br><em>Russian Empire</em></h1>
       <p class="lede">
-        Sergei Prokudin-Gorskii photographed the Russian Empire in colour before colour film
-        existed &mdash; three exposures per scene, through a red, a green and a blue filter.
-        This aligns his glass plate negatives back into single colour photographs.
+ Sergei Prokudin-Gorskii photographed the Russian Empire in color before color film
+        existed. Three exposures of every scene, through a red, a green and a blue filter.
+ This aligns his glass plate negatives back into single color photographs.
       </p>
       <ul class="meta">
         <li>17 plates aligned</li>
@@ -52,18 +52,18 @@
       <figure class="fig" style="max-width:420px;">
         <img src="media/fig1_plate_split.jpg" alt="A glass plate scan divided into its blue, green and red thirds">
         <figcaption>One scan holds three separate exposures stacked vertically. Top to bottom the
-          filter order is <b>B, G, R</b> &mdash; not RGB.</figcaption>
+          filter order is <b>B, G, R</b>, not RGB.</figcaption>
       </figure>
 
-      <div class="todo">
-        <p>Explain what the raw plate is and why you can't just stack the three thirds straight into an RGB image. Mention that the camera shifted between the three exposures, so each channel needs to be moved back into place.</p>
-        <p>Say what the search is actually looking for: a single (x, y) translation per channel, using blue as the fixed reference.</p>
+      <div class="prose">
+        <p>Each scan is one tall image that holds three separate photos. Prokudin-Gorskii took them one after another through three different color filters, and they sit stacked on the plate in blue, green, red order from top to bottom. To get a color photo back I cut the scan into three equal pieces and put them into the red, green and blue slots of a new image.</p>
+        <p>The problem is that the camera moved a little between the three shots. If I stack the pieces without doing anything else, every object lands in a slightly different spot in each channel, and the result has colored outlines all over it. So before stacking I slide the green and red pieces around until they line up with the blue one. Blue stays fixed and only the other two move. The only thing I search for is how far to slide each piece up or down and left or right.</p>
       </div>
 
       <figure class="fig" style="max-width:720px;">
-        <img src="media/fig2_naive_vs_aligned.jpg" alt="Left: channels stacked with no alignment, heavy colour fringing. Right: after alignment, clean.">
+        <img src="media/fig2_naive_vs_aligned.jpg" alt="Left: channels stacked with no alignment, heavy color fringing. Right: after alignment, clean.">
         <figcaption>Cathedral, detail. <b>Left:</b> the three channels stacked with no shift at all.
-          <b>Right:</b> after searching for the right shift &mdash; G moved (5,&nbsp;2) and R moved
+          <b>Right:</b> after searching for the right shift. G moved (5,&nbsp;2) and R moved
           (12,&nbsp;3).</figcaption>
       </figure>
     </div>
@@ -74,10 +74,11 @@
       <p class="eyebrow">Part 1</p>
       <h2>Single-scale alignment</h2>
 
-      <div class="todo">
-        <p>Describe the exhaustive search: every shift in a 31x31 window from -15 to +15, scoring each one and keeping the best.</p>
-        <p>Explain your two metrics in your own words. NCC (subtract the mean, normalise, take the dot product - so it ignores overall brightness and only compares pattern) and L2 / Euclidean distance. Say which you used as the default and why.</p>
-        <p>Explain why you crop the border before scoring. Two reasons worth mentioning: the plate edges are junk that looks identical in all three channels, and np.roll wraps pixels around to the opposite side.</p>
+      <div class="prose">
+        <p>My first version simply tries every possible shift. For each channel I loop over every whole pixel shift from -15 to +15 in both directions. That is 31 by 31, so 961 shifts to test. For each one I slide the channel with np.roll, compare it against the blue channel, and keep whichever shift scored best.</p>
+        <p>I scored those shifts two different ways. The first is L2, also called Euclidean distance. I subtract one image from the other, square every pixel of the difference, add it all up and take the square root. A small number means the two images are close, so with L2 I want the lowest score. The second is normalized cross correlation, or NCC. For NCC I subtract the mean from each image and divide each one by its own length, then multiply them together pixel by pixel and add up the result. Because both images get flattened onto the same scale first, NCC ignores whether one channel is brighter overall and only looks at whether the patterns match. A score near 1 means a good match, so with NCC I want the highest score. I used NCC as my default.</p>
+        <p>To keep the code simple I had my scoring function return the negative of the L2 distance. That way a bigger number always means a better match no matter which metric I pick, and I only need one search loop instead of two.</p>
+        <p>One detail that matters more than I expected is that I do not score the whole image. I cut the outer 20 percent off first. There are two reasons. The scans have black and white borders from the plate itself, and those borders look nearly identical in all three channels, so they make every shift look like a good match and drown out the real signal from the photo. On top of that, np.roll wraps pixels around, so shifting an image down by ten pixels makes the bottom ten rows reappear at the top. Cropping well past the largest shift I search keeps that wrapped strip out of the score.</p>
       </div>
 
       <div class="tbl-wrap">
@@ -91,8 +92,8 @@
         </table>
       </div>
 
-      <div class="todo">
-        <p>Point out that NCC and L2 returned identical offsets on all three low-resolution images, and say what you think that means about how easy these three are.</p>
+      <div class="prose">
+        <p>NCC and L2 picked exactly the same offsets on all three images. That makes sense, because these three are the easy cases. They are small, the offsets are tiny, and their three channels have fairly similar brightness, so both metrics agree about where the best match sits. The two only start to disagree on plates where the channels have very different brightness, which is exactly what goes wrong with the Emir further down.</p>
       </div>
 
       <div class="gallery" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));">
@@ -108,21 +109,21 @@
       <p class="eyebrow">Part 2</p>
       <h2>Coarse-to-fine pyramid</h2>
 
-      <div class="todo">
-        <p>Explain why exhaustive search breaks down on the .tif files: the offsets run past 170 pixels, and each guess costs millions of pixel comparisons.</p>
-        <p>Walk through the pyramid. Shrink both channels repeatedly until the image is small, do the wide search there where it's cheap, then walk back up - doubling the offset at each step because the image doubles, and only re-checking a pixel or two around it.</p>
-        <p>Mention how you downsample (averaging 2x2 blocks rather than dropping pixels) and why blurring first matters.</p>
+      <div class="prose">
+        <p>The exhaustive search is fine on the small jpg files, but it falls apart on the full size tif scans. Those are roughly 3600 by 3200 pixels per channel, and the real offsets run past 170 pixels. To find an offset that big by brute force I would need a search window of at least 341 by 341, which is over 116,000 shifts, and every single one of those compares about 11 million pixels. That would take hours per image.</p>
+        <p>The fix is to solve an easier version of the problem first. I shrink both channels by half over and over until the longest side is under 300 pixels. The offset shrinks by the same factor on the way down, so an offset of 170 pixels at full size becomes only about 10 pixels down there, and a plain 31 by 31 search finds it quickly. Then I work back up. Each step up doubles the image, so it doubles the offset I found too. From there the answer is only a pixel or two away, so a tiny 5 by 5 search is enough to polish it at each level. I wrote this as a recursive function that calls itself on the half size images and then refines whatever comes back.</p>
+        <p>For the shrinking step I average each 2 by 2 block of pixels into one pixel rather than just keeping every other pixel. Averaging blurs the image slightly on the way down, and that blur matters. If I only kept every other pixel, fine detail like grass or water texture would turn into random noise at the small sizes, and the coarse search would lock onto that noise instead of the real shape of the scene.</p>
       </div>
 
       <figure class="fig">
         <img src="media/fig3_pyramid.jpg" alt="The five pyramid levels at their true relative sizes, from 227x200 up to 3634x3202">
         <figcaption>The five levels built for <b>church.tif</b>, drawn at their true relative sizes.
-          The wide &plusmn;15 search happens on the 227&times;200 version; every level above it only
+ The wide &plusmn;15 search happens on the 227&times;200 version; every level above it only
           needs a &plusmn;2 touch-up.</figcaption>
       </figure>
 
-      <div class="todo">
-        <p>State your search parameters and note they are fixed for every image - no per-image tuning.</p>
+      <div class="prose">
+        <p>I use the same settings for every image, with no tuning per picture. The pyramid keeps halving until the longest side is 300 pixels or less, the search at that coarsest level is plus or minus 15, and every level above it refines by plus or minus 2. Scoring always uses NCC on the middle 80 percent of the image. All 14 provided images run in about 25 seconds total, which is roughly 2.2 seconds for each full size tif.</p>
       </div>
 
       <h3>Offsets on all 14 provided images</h3>
@@ -148,8 +149,8 @@
         </table>
       </div>
 
-      <div class="todo">
-        <p>Note the pattern: R is consistently about double G, because the red frame sits twice as far down the plate as the green one. Then point out that emir breaks it, and link ahead to the failure section.</p>
+      <div class="prose">
+        <p>There is a pattern in the table worth pointing out. The red offset is close to double the green offset in almost every row. Church goes 25 then 58, melons goes 82 then 178, self portrait goes 79 then 176. That is what you would expect, because the red frame sits twice as far down the plate as the green frame, so whatever drift happened between exposures has had twice as long to build up. Emir is the one row that breaks the pattern badly, with a red offset of (141, -205) when every other image has a sideways offset under 40. That is the image my aligner got wrong, and I go through why below.</p>
       </div>
 
       <div class="gallery">
@@ -218,27 +219,27 @@
       <p class="eyebrow">Part 3</p>
       <h2>Three of my own</h2>
 
-      <div class="todo">
-        <p>Say where these came from (the Library of Congress Prokudin-Gorskii archive) and why you picked these three.</p>
+      <div class="prose">
+        <p>These three came from the Library of Congress, which digitized Prokudin-Gorskii's whole collection and puts the raw glass plate scans online for free. I picked three that were not in the set we were given, and that looked different from each other, so I could see whether my aligner handles scenes it had not been tested on. I went with a narrow river gorge, a wide flat lake, and a village on a mountainside.</p>
       </div>
 
       <div class="gallery" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));">
         <figure>
           <a href="out/extra_00352.jpg" target="_blank" rel="noopener"><img src="out/extra_00352.jpg" alt="River gorge" loading="lazy"></a>
-          <figcaption><b>LoC 00352</b> &mdash; River gorge<br>G (23, -7) &middot; R (97, -12)</figcaption>
+          <figcaption><b>LoC 00352</b>, River gorge<br>G (23, -7) &middot; R (97, -12)</figcaption>
         </figure>
         <figure>
           <a href="out/extra_01015.jpg" target="_blank" rel="noopener"><img src="out/extra_01015.jpg" alt="Lake and far shore" loading="lazy"></a>
-          <figcaption><b>LoC 01015</b> &mdash; Lake and far shore<br>G (26, 2) &middot; R (57, -2)</figcaption>
+          <figcaption><b>LoC 01015</b>, Lake and far shore<br>G (26, 2) &middot; R (57, -2)</figcaption>
         </figure>
         <figure>
           <a href="out/extra_01581.jpg" target="_blank" rel="noopener"><img src="out/extra_01581.jpg" alt="Mountain valley village" loading="lazy"></a>
-          <figcaption><b>LoC 01581</b> &mdash; Mountain valley village<br>G (81, -11) &middot; R (170, -33)</figcaption>
+          <figcaption><b>LoC 01581</b>, Mountain valley village<br>G (81, -11) &middot; R (170, -33)</figcaption>
         </figure>
       </div>
 
-      <div class="todo">
-        <p>Say how they did. All three aligned on the first try with the same fixed parameters. 01015 is worth a sentence - the plate is faded and speckled with damage, but the far shore still comes out sharp.</p>
+      <div class="prose">
+        <p>All three lined up correctly on the first run, using the exact same settings as the provided images. The lake is the interesting one. That plate has faded badly, it is covered in small spots of damage, and the whole thing is low contrast and washed out, so I expected it to give me trouble. It aligned fine anyway, and the buildings along the far shore come out sharp. I think NCC coped because subtracting the mean and normalizing makes the score ignore the overall fading, and the shoreline still gives it a strong enough pattern to lock onto.</p>
       </div>
     </div>
   </section>
@@ -267,9 +268,9 @@
         </figure>
       </div>
 
-      <div class="todo">
-        <p>Explain why raw-pixel NCC fails here specifically. The key point: NCC on brightness assumes the three channels look alike, and on the Emir they don't - his robe is bright in one channel and dark in another, so the best brightness match is in the wrong place.</p>
-        <p>Note that this is the one failure the spec allows, and that the fix is in the next section.</p>
+      <div class="prose">
+        <p>NCC on raw pixels assumes the three channels look roughly alike, and on this plate they do not. The Emir is wearing a bright blue robe. Blue cloth reflects a lot of light through a blue filter and very little through a red one, so the robe comes out nearly white in the blue channel and nearly black in the red channel. Parts of the background do the same thing in reverse. When the aligner slides the red channel around hunting for the brightness pattern that best matches blue, the correct position does not score well at all, because at the correct position a bright region is sitting on top of a dark one. It settles on a different position instead, 205 pixels off sideways, and the result is the doubled ghost image above.</p>
+        <p>Subtracting the mean does not rescue NCC here. That step only corrects for one channel being brighter overall, and the trouble on this plate is a different shape. Different parts of the picture flip brightness in opposite directions, so no single overall adjustment can line them up. The spec allows one image to come out misaligned and this is mine, but the next section is how I fixed it anyway.</p>
       </div>
     </div>
   </section>
@@ -279,31 +280,31 @@
       <p class="eyebrow">Bells &amp; whistles</p>
       <h2>Better features: matching on edges</h2>
 
-      <div class="todo">
-        <p>Explain the idea: instead of comparing brightness, compare how fast brightness is *changing*. Edges sit in the same place in all three channels even when the brightness levels are completely different.</p>
-        <p>Describe your gradient briefly - a central difference horizontally and vertically, combined with Pythagoras to get steepness.</p>
-        <p>Important: say that you search on the edge maps but still roll the original channels, so the edges only guide the search and never appear in the output.</p>
+      <div class="prose">
+        <p>The way around this is to stop comparing brightness and start comparing where the brightness changes. The outline of the Emir's robe sits in exactly the same place in all three channels, even though the robe is nearly white in one and nearly black in another. Edges survive a brightness flip, so matching on edges keeps working on plates where matching on brightness gives up.</p>
+        <p>I build the edge map with a central difference. For every pixel I take the pixel below it minus the pixel above it to get the vertical change, and the pixel to its right minus the pixel to its left to get the horizontal change. Then I combine the two with Pythagoras, the square root of one squared plus the other squared. That gives me how steep the brightness is at that pixel whichever direction it happens to run. Flat areas like sky come out near zero and outlines come out bright.</p>
+        <p>One important detail is that the edge maps are only used for the search. I run the pyramid on the edge version of each channel to work out the offsets, then I go back and slide the original untouched channels by those offsets to build the final picture. The edge maps never appear in the output, they only tell me how far to move things.</p>
       </div>
 
       <figure class="fig" style="max-width:760px;">
         <img src="media/fig4_edges.jpg" alt="Left: the blue channel. Right: its gradient magnitude, showing only where brightness changes.">
         <figcaption><b>Left:</b> the blue channel of cathedral. <b>Right:</b> what the aligner
-          actually matches on in edge mode &mdash; brightness is gone, only the outlines survive.</figcaption>
+          actually matches on in edge mode. Brightness is gone and only the outlines survive.</figcaption>
       </figure>
 
       <div class="tbl-wrap">
         <table class="data">
           <thead><tr><th>image</th><th>raw-pixel NCC</th><th>edge NCC</th><th>verdict</th></tr></thead>
           <tbody>
-            <tr class="bad"><td>emir &mdash; R</td><td>(141, -205)</td><td>(107, 40)</td><td>fixed</td></tr>
-            <tr><td>church &mdash; R</td><td>(58, -4)</td><td>(58, -4)</td><td>unchanged</td></tr>
-            <tr><td>melons &mdash; R</td><td>(178, 13)</td><td>(177, 13)</td><td>within 1px</td></tr>
+            <tr class="bad"><td>emir, R</td><td>(141, -205)</td><td>(107, 40)</td><td>fixed</td></tr>
+            <tr><td>church, R</td><td>(58, -4)</td><td>(58, -4)</td><td>unchanged</td></tr>
+            <tr><td>melons, R</td><td>(178, 13)</td><td>(177, 13)</td><td>within 1px</td></tr>
           </tbody>
         </table>
       </div>
 
-      <div class="todo">
-        <p>Close the loop: edges rescue the one image that failed and leave the already-working images essentially untouched, which is what you want from a change like this.</p>
+      <div class="prose">
+        <p>The table shows how it went. Edges fix the one image that was broken, moving the Emir's red offset from (141, -205) to (107, 40), which puts it right back in line with every other plate. On images that already worked, edges barely change anything. Church comes out identical and melons moves by a single pixel. That is the behaviour I was hoping for, because a change that rescued one image while shifting all the others would be hard to trust.</p>
       </div>
     </div>
   </section>
