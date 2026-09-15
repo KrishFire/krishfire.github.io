@@ -1,3 +1,8 @@
 _raw/
 .DS_Store
 __pycache__/
+
+# Project 1: source glass-plate scans (~762MB, TIFs are ~70MB each).
+# GitHub rejects files over 100MB -- keep these local, commit only the outputs.
+1/CS180_fa2026_proj1_data/
+1/extra_data/

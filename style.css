@@ -320,3 +320,77 @@ footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wr
   .tag--good { background: #14532d !important; }
   .tag--bad  { background: #7a2014 !important; }
 }
+
+/* ---------- project 1: tables, galleries, and draft markers ---------- */
+
+.tbl-wrap { overflow-x: auto; margin: 1.75rem 0; }
+
+table.data {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: .82rem;
+  min-width: 100%;
+}
+table.data th, table.data td {
+  padding: .45rem .9rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+  white-space: nowrap;
+}
+table.data th {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-mute);
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--text-mute);
+}
+table.data td:first-child, table.data th:first-child { text-align: left; }
+table.data tbody tr:hover { background: var(--bg-raised); }
+table.data tr.bad td { color: #b3391f; font-weight: 600; }
+@media (prefers-color-scheme: dark) { table.data tr.bad td { color: #ff8a65; } }
+
+.gallery {
+  display: grid; gap: 1rem; margin: 2rem 0 0;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+}
+.gallery figure { margin: 0; }
+.gallery a {
+  display: block; border: 1px solid var(--rule); border-radius: 7px;
+  overflow: hidden; background: var(--bg-sunken);
+}
+.gallery img { display: block; width: 100%; height: 175px; object-fit: cover; }
+.gallery figcaption {
+  margin-top: .45rem; font-family: var(--mono);
+  font-size: .72rem; color: var(--text-mute); line-height: 1.45;
+}
+.gallery figcaption b { font-family: var(--sans); font-size: .82rem; color: var(--text); }
+
+.fig { margin: 2rem 0 0; }
+.fig img {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--rule); border-radius: 8px; background: var(--bg-sunken);
+}
+.fig figcaption { margin-top: .75rem; font-size: .9rem; color: var(--text-soft); max-width: var(--measure); }
+
+/* Draft markers. Loud on purpose -- they must not survive to submission. */
+.todo {
+  margin: 1.5rem 0; padding: 1rem 1.15rem;
+  border: 2px dashed #d08700; border-radius: 8px;
+  background: color-mix(in srgb, #d08700 8%, transparent);
+  max-width: var(--measure);
+}
+.todo::before {
+  content: "WRITE THIS";
+  display: inline-block; margin-bottom: .5rem;
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
+  color: #9a6400; background: #ffe08a; border-radius: 4px; padding: .15rem .5rem;
+}
+.todo p { margin: 0; font-size: .92rem; color: var(--text-soft); }
+.todo p + p { margin-top: .5rem; }
+@media (prefers-color-scheme: dark) {
+  .todo { border-color: #f0b429; background: rgba(240,180,41,.09); }
+  .todo::before { color: #3a2800; background: #f0b429; }
+}
+@media print { .todo { display: none !important; } }

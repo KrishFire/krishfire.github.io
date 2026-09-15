@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project 1: Colorizing the Prokudin-Gorskii Collection — Krish Tandon</title>
+  <meta name="description" content="CS180 Project 1: aligning Prokudin-Gorskii glass plate negatives into color photographs with NCC, L2 and an image pyramid.">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎞️</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="/">Krish Tandon</a>
+    <nav class="topnav">
+      <a href="#approach">Approach</a>
+      <a href="#single">Single-scale</a>
+      <a href="#pyramid">Pyramid</a>
+      <a href="#mine">My picks</a>
+      <a href="#failure">Failure</a>
+      <a href="#bells">Better features</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <a class="backlink" href="/">&larr; All projects</a>
+      <p class="eyebrow">Project 1 &middot; CS180 &middot; Fall 2026</p>
+      <h1>Images of the<br><em>Russian Empire</em></h1>
+      <p class="lede">
+        Sergei Prokudin-Gorskii photographed the Russian Empire in colour before colour film
+        existed &mdash; three exposures per scene, through a red, a green and a blue filter.
+        This aligns his glass plate negatives back into single colour photographs.
+      </p>
+      <ul class="meta">
+        <li>17 plates aligned</li>
+        <li>~2.2s per full-size scan</li>
+        <li>NumPy + Pillow</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="approach">
+    <div class="wrap">
+      <p class="eyebrow">The problem</p>
+      <h2>Three photos, one scene</h2>
+
+      <figure class="fig" style="max-width:420px;">
+        <img src="media/fig1_plate_split.jpg" alt="A glass plate scan divided into its blue, green and red thirds">
+        <figcaption>One scan holds three separate exposures stacked vertically. Top to bottom the
+          filter order is <b>B, G, R</b> &mdash; not RGB.</figcaption>
+      </figure>
+
+      <div class="todo">
+        <p>Explain what the raw plate is and why you can't just stack the three thirds straight into an RGB image. Mention that the camera shifted between the three exposures, so each channel needs to be moved back into place.</p>
+        <p>Say what the search is actually looking for: a single (x, y) translation per channel, using blue as the fixed reference.</p>
+      </div>
+
+      <figure class="fig" style="max-width:720px;">
+        <img src="media/fig2_naive_vs_aligned.jpg" alt="Left: channels stacked with no alignment, heavy colour fringing. Right: after alignment, clean.">
+        <figcaption>Cathedral, detail. <b>Left:</b> the three channels stacked with no shift at all.
+          <b>Right:</b> after searching for the right shift &mdash; G moved (5,&nbsp;2) and R moved
+          (12,&nbsp;3).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="single">
+    <div class="wrap">
+      <p class="eyebrow">Part 1</p>
+      <h2>Single-scale alignment</h2>
+
+      <div class="todo">
+        <p>Describe the exhaustive search: every shift in a 31x31 window from -15 to +15, scoring each one and keeping the best.</p>
+        <p>Explain your two metrics in your own words. NCC (subtract the mean, normalise, take the dot product - so it ignores overall brightness and only compares pattern) and L2 / Euclidean distance. Say which you used as the default and why.</p>
+        <p>Explain why you crop the border before scoring. Two reasons worth mentioning: the plate edges are junk that looks identical in all three channels, and np.roll wraps pixels around to the opposite side.</p>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="data">
+          <thead><tr><th>image</th><th>G (dy, dx)</th><th>R (dy, dx)</th><th>metric</th></tr></thead>
+          <tbody>
+            <tr><td>cathedral</td><td>(5, 2)</td><td>(12, 3)</td><td>NCC and L2</td></tr>
+            <tr><td>monastery</td><td>(-3, 2)</td><td>(3, 2)</td><td>NCC and L2</td></tr>
+            <tr><td>tobolsk</td><td>(3, 3)</td><td>(6, 3)</td><td>NCC and L2</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="todo">
+        <p>Point out that NCC and L2 returned identical offsets on all three low-resolution images, and say what you think that means about how easy these three are.</p>
+      </div>
+
+      <div class="gallery" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));">
+        <figure><a href="out/cathedral.jpg" target="_blank" rel="noopener"><img src="out/cathedral.jpg" alt="cathedral"></a><figcaption><b>cathedral</b><br>G (5, 2) &middot; R (12, 3)</figcaption></figure>
+        <figure><a href="out/monastery.jpg" target="_blank" rel="noopener"><img src="out/monastery.jpg" alt="monastery"></a><figcaption><b>monastery</b><br>G (-3, 2) &middot; R (3, 2)</figcaption></figure>
+        <figure><a href="out/tobolsk.jpg" target="_blank" rel="noopener"><img src="out/tobolsk.jpg" alt="tobolsk"></a><figcaption><b>tobolsk</b><br>G (3, 3) &middot; R (6, 3)</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="pyramid">
+    <div class="wrap">
+      <p class="eyebrow">Part 2</p>
+      <h2>Coarse-to-fine pyramid</h2>
+
+      <div class="todo">
+        <p>Explain why exhaustive search breaks down on the .tif files: the offsets run past 170 pixels, and each guess costs millions of pixel comparisons.</p>
+        <p>Walk through the pyramid. Shrink both channels repeatedly until the image is small, do the wide search there where it's cheap, then walk back up - doubling the offset at each step because the image doubles, and only re-checking a pixel or two around it.</p>
+        <p>Mention how you downsample (averaging 2x2 blocks rather than dropping pixels) and why blurring first matters.</p>
+      </div>
+
+      <figure class="fig">
+        <img src="media/fig3_pyramid.jpg" alt="The five pyramid levels at their true relative sizes, from 227x200 up to 3634x3202">
+        <figcaption>The five levels built for <b>church.tif</b>, drawn at their true relative sizes.
+          The wide &plusmn;15 search happens on the 227&times;200 version; every level above it only
+          needs a &plusmn;2 touch-up.</figcaption>
+      </figure>
+
+      <div class="todo">
+        <p>State your search parameters and note they are fixed for every image - no per-image tuning.</p>
+      </div>
+
+      <h3>Offsets on all 14 provided images</h3>
+      <div class="tbl-wrap">
+        <table class="data">
+          <thead><tr><th>image</th><th>G (dy, dx)</th><th>R (dy, dx)</th><th>time</th></tr></thead>
+          <tbody>
+            <tr><td>cathedral</td><td>(5, 2)</td><td>(12, 3)</td><td>0.2s</td></tr>
+            <tr><td>church</td><td>(25, 4)</td><td>(58, -4)</td><td>2.2s</td></tr>
+            <tr class="bad"><td>emir</td><td>(49, 24)</td><td>(141, -205)</td><td>2.2s</td></tr>
+            <tr><td>harvesters</td><td>(60, 17)</td><td>(124, 13)</td><td>2.2s</td></tr>
+            <tr><td>icon</td><td>(41, 17)</td><td>(89, 23)</td><td>2.2s</td></tr>
+            <tr><td>ilemselga</td><td>(40, 7)</td><td>(130, 11)</td><td>2.2s</td></tr>
+            <tr><td>melons</td><td>(82, 11)</td><td>(178, 13)</td><td>2.3s</td></tr>
+            <tr><td>monastery</td><td>(-3, 2)</td><td>(3, 2)</td><td>0.2s</td></tr>
+            <tr><td>religous_painting</td><td>(28, 3)</td><td>(68, 7)</td><td>2.3s</td></tr>
+            <tr><td>self_portrait</td><td>(79, 29)</td><td>(176, 37)</td><td>2.3s</td></tr>
+            <tr><td>siren</td><td>(49, -6)</td><td>(96, -25)</td><td>2.2s</td></tr>
+            <tr><td>three_generations</td><td>(53, 14)</td><td>(112, 11)</td><td>2.1s</td></tr>
+            <tr><td>tobolsk</td><td>(3, 3)</td><td>(6, 3)</td><td>0.4s</td></tr>
+            <tr><td>wharf</td><td>(15, -7)</td><td>(83, -16)</td><td>2.2s</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="todo">
+        <p>Note the pattern: R is consistently about double G, because the red frame sits twice as far down the plate as the green one. Then point out that emir breaks it, and link ahead to the failure section.</p>
+      </div>
+
+      <div class="gallery">
+        <figure>
+          <a href="out/cathedral.jpg" target="_blank" rel="noopener"><img src="out/cathedral.jpg" alt="cathedral colorized" loading="lazy"></a>
+          <figcaption><b>cathedral</b><br>G (5, 2) &middot; R (12, 3)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/church.jpg" target="_blank" rel="noopener"><img src="out/church.jpg" alt="church colorized" loading="lazy"></a>
+          <figcaption><b>church</b><br>G (25, 4) &middot; R (58, -4)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/emir.jpg" target="_blank" rel="noopener"><img src="out/emir.jpg" alt="emir colorized" loading="lazy"></a>
+          <figcaption><b>emir</b><br>G (49, 24) &middot; R (141, -205)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/harvesters.jpg" target="_blank" rel="noopener"><img src="out/harvesters.jpg" alt="harvesters colorized" loading="lazy"></a>
+          <figcaption><b>harvesters</b><br>G (60, 17) &middot; R (124, 13)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/icon.jpg" target="_blank" rel="noopener"><img src="out/icon.jpg" alt="icon colorized" loading="lazy"></a>
+          <figcaption><b>icon</b><br>G (41, 17) &middot; R (89, 23)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/ilemselga.jpg" target="_blank" rel="noopener"><img src="out/ilemselga.jpg" alt="ilemselga colorized" loading="lazy"></a>
+          <figcaption><b>ilemselga</b><br>G (40, 7) &middot; R (130, 11)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/melons.jpg" target="_blank" rel="noopener"><img src="out/melons.jpg" alt="melons colorized" loading="lazy"></a>
+          <figcaption><b>melons</b><br>G (82, 11) &middot; R (178, 13)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/monastery.jpg" target="_blank" rel="noopener"><img src="out/monastery.jpg" alt="monastery colorized" loading="lazy"></a>
+          <figcaption><b>monastery</b><br>G (-3, 2) &middot; R (3, 2)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/religous_painting.jpg" target="_blank" rel="noopener"><img src="out/religous_painting.jpg" alt="religous_painting colorized" loading="lazy"></a>
+          <figcaption><b>religous_painting</b><br>G (28, 3) &middot; R (68, 7)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/self_portrait.jpg" target="_blank" rel="noopener"><img src="out/self_portrait.jpg" alt="self_portrait colorized" loading="lazy"></a>
+          <figcaption><b>self_portrait</b><br>G (79, 29) &middot; R (176, 37)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/siren.jpg" target="_blank" rel="noopener"><img src="out/siren.jpg" alt="siren colorized" loading="lazy"></a>
+          <figcaption><b>siren</b><br>G (49, -6) &middot; R (96, -25)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/three_generations.jpg" target="_blank" rel="noopener"><img src="out/three_generations.jpg" alt="three_generations colorized" loading="lazy"></a>
+          <figcaption><b>three_generations</b><br>G (53, 14) &middot; R (112, 11)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/tobolsk.jpg" target="_blank" rel="noopener"><img src="out/tobolsk.jpg" alt="tobolsk colorized" loading="lazy"></a>
+          <figcaption><b>tobolsk</b><br>G (3, 3) &middot; R (6, 3)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/wharf.jpg" target="_blank" rel="noopener"><img src="out/wharf.jpg" alt="wharf colorized" loading="lazy"></a>
+          <figcaption><b>wharf</b><br>G (15, -7) &middot; R (83, -16)</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="mine">
+    <div class="wrap">
+      <p class="eyebrow">Part 3</p>
+      <h2>Three of my own</h2>
+
+      <div class="todo">
+        <p>Say where these came from (the Library of Congress Prokudin-Gorskii archive) and why you picked these three.</p>
+      </div>
+
+      <div class="gallery" style="grid-template-columns:repeat(auto-fill,minmax(230px,1fr));">
+        <figure>
+          <a href="out/extra_00352.jpg" target="_blank" rel="noopener"><img src="out/extra_00352.jpg" alt="River gorge" loading="lazy"></a>
+          <figcaption><b>LoC 00352</b> &mdash; River gorge<br>G (23, -7) &middot; R (97, -12)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/extra_01015.jpg" target="_blank" rel="noopener"><img src="out/extra_01015.jpg" alt="Lake and far shore" loading="lazy"></a>
+          <figcaption><b>LoC 01015</b> &mdash; Lake and far shore<br>G (26, 2) &middot; R (57, -2)</figcaption>
+        </figure>
+        <figure>
+          <a href="out/extra_01581.jpg" target="_blank" rel="noopener"><img src="out/extra_01581.jpg" alt="Mountain valley village" loading="lazy"></a>
+          <figcaption><b>LoC 01581</b> &mdash; Mountain valley village<br>G (81, -11) &middot; R (170, -33)</figcaption>
+        </figure>
+      </div>
+
+      <div class="todo">
+        <p>Say how they did. All three aligned on the first try with the same fixed parameters. 01015 is worth a sentence - the plate is faded and speckled with damage, but the far shore still comes out sharp.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="failure">
+    <div class="wrap">
+      <p class="eyebrow">Where it breaks</p>
+      <h2>The Emir of Bukhara</h2>
+
+      <div class="pair">
+        <figure>
+          <a class="shot shot--tall" href="media/fig5_emir_before.jpg" target="_blank" rel="noopener">
+            <span class="tag tag--bad">NCC on raw pixels</span>
+            <img src="media/fig5_emir_before.jpg" alt="Emir misaligned: the red channel is 205 pixels off, producing a doubled ghost image">
+          </a>
+          <figcaption><b>Failed.</b> R = (141, &minus;205). Every other plate has |dx| under 40.
+            <span class="exif">the only failure in 17 images</span></figcaption>
+        </figure>
+        <figure>
+          <a class="shot shot--tall" href="media/fig5_emir_after.jpg" target="_blank" rel="noopener">
+            <span class="tag tag--good">NCC on edges</span>
+            <img src="media/fig5_emir_after.jpg" alt="Emir correctly aligned after matching on edges instead of raw brightness">
+          </a>
+          <figcaption><b>Fixed.</b> R = (107, 40), back in line with everything else.
+            <span class="exif">see Better features below</span></figcaption>
+        </figure>
+      </div>
+
+      <div class="todo">
+        <p>Explain why raw-pixel NCC fails here specifically. The key point: NCC on brightness assumes the three channels look alike, and on the Emir they don't - his robe is bright in one channel and dark in another, so the best brightness match is in the wrong place.</p>
+        <p>Note that this is the one failure the spec allows, and that the fix is in the next section.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="bells">
+    <div class="wrap">
+      <p class="eyebrow">Bells &amp; whistles</p>
+      <h2>Better features: matching on edges</h2>
+
+      <div class="todo">
+        <p>Explain the idea: instead of comparing brightness, compare how fast brightness is *changing*. Edges sit in the same place in all three channels even when the brightness levels are completely different.</p>
+        <p>Describe your gradient briefly - a central difference horizontally and vertically, combined with Pythagoras to get steepness.</p>
+        <p>Important: say that you search on the edge maps but still roll the original channels, so the edges only guide the search and never appear in the output.</p>
+      </div>
+
+      <figure class="fig" style="max-width:760px;">
+        <img src="media/fig4_edges.jpg" alt="Left: the blue channel. Right: its gradient magnitude, showing only where brightness changes.">
+        <figcaption><b>Left:</b> the blue channel of cathedral. <b>Right:</b> what the aligner
+          actually matches on in edge mode &mdash; brightness is gone, only the outlines survive.</figcaption>
+      </figure>
+
+      <div class="tbl-wrap">
+        <table class="data">
+          <thead><tr><th>image</th><th>raw-pixel NCC</th><th>edge NCC</th><th>verdict</th></tr></thead>
+          <tbody>
+            <tr class="bad"><td>emir &mdash; R</td><td>(141, -205)</td><td>(107, 40)</td><td>fixed</td></tr>
+            <tr><td>church &mdash; R</td><td>(58, -4)</td><td>(58, -4)</td><td>unchanged</td></tr>
+            <tr><td>melons &mdash; R</td><td>(178, 13)</td><td>(177, 13)</td><td>within 1px</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="todo">
+        <p>Close the loop: edges rescue the one image that failed and leave the already-working images essentially untouched, which is what you want from a change like this.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Krish Tandon &middot; CS180 &middot; Project 1</span>
+    <span><a href="/">&larr; Back to portfolio</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
