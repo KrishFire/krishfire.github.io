@@ -394,3 +394,25 @@ table.data tr.bad td { color: #b3391f; font-weight: 600; }
   .todo::before { color: #3a2800; background: #f0b429; }
 }
 @media print { .todo { display: none !important; } }
+
+/* ---------- print rules for the project 1 blocks ---------- */
+
+@media print {
+  /* A whole glass plate is three frames tall, so an unconstrained figure is
+     taller than a page. break-inside:avoid then pushes it to the next page and
+     leaves the previous one almost empty. Cap the height instead. */
+  .fig img { max-height: 3.5in; width: auto; margin: 0 auto; }
+  .fig { text-align: center; }
+  .fig figcaption { text-align: left; margin-inline: auto; }
+
+  .gallery { grid-template-columns: repeat(5, 1fr); gap: .5rem; }
+  .gallery img { height: 88px; }
+  .gallery figcaption { font-size: .62rem; margin-top: .25rem; }
+
+  table.data { font-size: .74rem; }
+  table.data th, table.data td { padding: .22rem .55rem; }
+
+  /* let long sections flow across pages instead of jumping to a new one */
+  section { break-inside: auto; }
+  .gallery, .tbl-wrap { break-inside: auto; }
+}

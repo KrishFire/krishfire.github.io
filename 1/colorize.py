@@ -118,21 +118,6 @@ def colorize_edges(path, metric="ncc"):
     return (np.dstack([np.roll(r, r_off, axis=(0, 1)), np.roll(g, g_off, axis=(0, 1)), b]), g_off, r_off)
 
 
-def edges(im):
-    gy = np.zeros_like(im)
-    gx = np.zeros_like(im)
-    gy[1:-1, :] = im[2:, :] - im[:-2, :]
-    gx[:, 1:-1] = im[:, 2:] - im[:, :-2]
-    return np.sqrt(gx * gx + gy * gy)
-
-
-def colorize_edges(path, metric="ncc"):
-    b, g, r = split_channels(load_plate(path))
-    g_off = align_pyramid(edges(g), edges(b), metric=metric)
-    r_off = align_pyramid(edges(r), edges(b), metric=metric)
-    return (np.dstack([np.roll(r, r_off, axis=(0, 1)), np.roll(g, g_off, axis=(0, 1)), b]), g_off, r_off)
-
-
 DATA_DIR = "CS180_fa2026_proj1_data"
 OUT_DIR = "out"
 
