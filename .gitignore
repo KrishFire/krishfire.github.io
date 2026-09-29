@@ -11,3 +11,8 @@ __pycache__/
 2/out/
 2/*.zip
 2/data/*_pts.npy
+
+# Code goes to Gradescope only; the course says not to host it publicly
+1/*.py
+2/*.py
+2/data/hybrid/*.py
