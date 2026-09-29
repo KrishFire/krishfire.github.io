@@ -6,3 +6,8 @@ __pycache__/
 # GitHub rejects files over 100MB -- keep these local, commit only the outputs.
 1/CS180_fa2026_proj1_data/
 1/extra_data/
+
+# Project 2: regenerable outputs and the zip the course hands out
+2/out/
+2/*.zip
+2/data/*_pts.npy

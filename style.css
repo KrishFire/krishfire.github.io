@@ -416,3 +416,37 @@ table.data tr.bad td { color: #b3391f; font-weight: 600; }
   section { break-inside: auto; }
   .gallery, .tbl-wrap { break-inside: auto; }
 }
+
+/* ---------- project 2: code blocks and uncropped galleries ---------- */
+
+pre.code {
+  margin: 1.25rem 0;
+  padding: 1rem 1.15rem;
+  background: var(--bg-sunken);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: .8rem;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 820px;
+}
+code.inline { font-family: var(--mono); font-size: .86em; background: var(--bg-sunken); padding: .05em .35em; border-radius: 4px; }
+
+/* hybrids and stacks must not be cropped, so fit them instead of filling */
+.gallery.fit img { height: 220px; object-fit: contain; background: var(--bg-sunken); }
+.gallery.fit.tall img { height: 300px; }
+
+/* a hybrid shown big and small side by side */
+.hy { display: flex; align-items: flex-end; gap: 1.25rem; flex-wrap: wrap; margin: 1.75rem 0 0; }
+.hy .big img { display: block; max-height: 460px; max-width: 100%; border: 1px solid var(--rule); border-radius: 6px; }
+.hy .small img { display: block; width: 80px; border: 1px solid var(--rule); border-radius: 4px; }
+.hy figcaption { font-size: .82rem; color: var(--text-mute); margin-top: .35rem; }
+
+@media print {
+  pre.code { font-size: .64rem; padding: .6rem .75rem; break-inside: avoid; }
+  .gallery.fit img { height: 120px; }
+  .gallery.fit.tall img { height: 150px; }
+  .hy .big img { max-height: 3in; }
+}
