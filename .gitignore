@@ -16,3 +16,13 @@ __pycache__/
 1/*.py
 2/*.py
 2/data/hybrid/*.py
+
+# Project 3: code goes to Gradescope only; raw inputs and run outputs stay local
+3/*.py
+3/*.ipynb
+3/inputs/
+3/runs/
+3/.cache/
+
+# Course materials (slides, quizzes, solutions): private, never publish
+MT1_180/
