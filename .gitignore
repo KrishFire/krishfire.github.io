@@ -26,3 +26,11 @@ __pycache__/
 
 # Course materials (slides, quizzes, solutions): private, never publish
 MT1_180/
+
+# Project 4: code goes to Gradescope only; raw photos and run outputs stay local
+4/*.py
+4/*.ipynb
+4/inputs/
+4/runs/
+4/out/
+4/points/
